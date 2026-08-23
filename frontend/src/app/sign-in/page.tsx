@@ -1,3 +1,5 @@
+import { RedirectIfAuthenticated } from "@/components/auth/RedirectIfAuthenticated";
+import SignInComponent from "@/components/auth/sign-in";
 import {
   Card,
   CardDescription,
@@ -21,6 +23,10 @@ function SignInPage() {
             Sign in to connect calendar and start scheduling with you agent
           </CardDescription>
         </CardHeader>
+
+        <RedirectIfAuthenticated>
+          <SignInComponent />
+        </RedirectIfAuthenticated>
       </Card>
     </main>
   );
