@@ -44,25 +44,24 @@ function DashboardPage() {
 
   return (
     <div className={styles.shell}>
-     
-        sessionToken={sessionToken}
-        footer={
-          <>
-            <div className={styles.userLabel}>
-              {isUserLoading ? "Loading..." : label}
-            </div>
-            <Button
-              variant="ghost"
-              className={styles.logoutBtn}
-              disabled={loggingOut}
-              onClick={() => handleLogout()}
-            >
-              <LogOut className={styles.logoutIcon} />
-              {loggingOut ? "Logging out..." : "Log out"}
-            </Button>
-          </>
-        }
-
+      sessionToken={sessionToken}
+      footer=
+      {
+        <>
+          <div className={styles.userLabel}>
+            {isUserLoading ? "Loading..." : label}
+          </div>
+          <Button
+            variant="ghost"
+            className={styles.logoutBtn}
+            disabled={loggingOut}
+            onClick={() => handleLogout()}
+          >
+            <LogOut className={styles.logoutIcon} />
+            {loggingOut ? "Logging out..." : "Log out"}
+          </Button>
+        </>
+      }
     </div>
   );
 }
