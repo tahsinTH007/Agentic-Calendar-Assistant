@@ -85,3 +85,123 @@ export async function listUpcomingMeetings(input: {
 
   return (response.data.items ?? []).map(formatEvent);
 }
+
+export async function createMeeting(input: {
+  authUserId: string;
+  title: string;
+  startIso: string;
+  endIso: string;
+  attendeeEmails?: string[];
+  description?: string;
+  addGoogleMeet?: boolean;
+}) {
+  const calendar = await calendarForUser(input.authUserId);
+
+  // enabling this one by default
+  const withMeet = input.addGoogleMeet !== false;
+
+  const response = await calendar.events.insert({
+    calendarId: "primary",
+    sendUpdates: "all",
+    conferenceDataVersion: withMeet ? 1 : undefined,
+    requestBody: {
+      summary: input.title,
+      description: input.description,
+      start: {
+        dateTime: input.startIso,
+      },
+      end: {
+        dateTime: input.endIso,
+      },
+      attendees: (input.attendeeEmails ?? []).map((email) => ({ email })),
+      conferenceData: withMeet
+        ? {
+            createRequest: {
+              requestId: randomUUID(),
+              conferenceSolutionKey: {
+                type: "hangoutsMeet",
+              },
+            },
+          }
+        : undefined,
+    },
+  });
+
+  return {
+    ...formatEvent(response.data),
+    inviteEmailsSent: (input.attendeeEmails ?? []).length > 0,
+    googleMeetAdded: withMeet,
+  };
+}
+
+export async function cancelMeeting(input: {
+  authUserId: string;
+  eventId: string;
+}) {
+  const calendar = await calendarForUser(input.authUserId);
+
+  await calendar.events.delete({
+    calendarId: "primary",
+    eventId: input.eventId,
+    sendUpdates: "all",
+  });
+
+  return {
+    cancelled: true,
+    eventId: input.eventId,
+  };
+}
+
+export async function rescheduleMeeting(input: {
+  authUserId: string;
+  eventId: string;
+  startIso: string;
+  endIso: string;
+}) {
+  const calendar = await calendarForUser(input.authUserId);
+
+  const response = await calendar.events.patch({
+    calendarId: "primary",
+    eventId: input.eventId,
+    sendUpdates: "all",
+    requestBody: {
+      start: {
+        dateTime: input.startIso,
+      },
+      end: {
+        dateTime: input.endIso,
+      },
+    },
+  });
+
+  return formatEvent(response.data);
+}
+
+export async function checkCalendarBusy(input: {
+  authUserId: string;
+  startIso: string;
+  endIso: string;
+}) {
+  const calendar = await calendarForUser(input.authUserId);
+
+  const response = await calendar.freebusy.query({
+    requestBody: {
+      timeMin: input.startIso,
+      timeMax: input.endIso,
+      items: [
+        {
+          id: "primary",
+        },
+      ],
+    },
+  });
+
+  const busy = response.data?.calendars?.primary?.busy ?? [];
+
+  return {
+    busy: busy.map((item) => ({
+      start: item.start ?? null,
+      end: item.end ?? null,
+    })),
+  };
+}
